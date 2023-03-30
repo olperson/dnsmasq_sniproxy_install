@@ -1,3 +1,4 @@
+chat.openai.com
 netflix.ca
 netflix.com
 netflix.net
