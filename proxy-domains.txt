@@ -554,4 +554,16 @@ tver.jp
 radiko-cf.com
 radiko.jp
 smartstream.ne.jp
+redd.it
+reddit.app.link
+reddit.com
+reddit.map.fastly.net
+redditblog.com
+reddithelp.com
+redditinc.com
+redditmail.com
+redditmedia.com
+redditspace.com
+redditstatic.com
+redditstatus.com
 
