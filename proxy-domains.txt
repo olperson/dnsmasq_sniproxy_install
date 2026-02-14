@@ -451,4 +451,7 @@ homeboxoffice.com
 max.com
 maxgo.com
 redbyhbo.com
+kktv.com.tw
+kktv.me
+theater-kktv.cdn.hinet.net
 
