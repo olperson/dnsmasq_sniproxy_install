@@ -517,4 +517,6 @@ scc.ott.hinet.net
 static-hamivideo.cdn.hinet.net
 tvcastlive-hamivideo.cdn.hinet.net
 weblive-hamivideo.cdn.hinet.net
+catchplay.com
+tra-ww000-cp.akamaized.net
 
