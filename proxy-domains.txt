@@ -519,4 +519,7 @@ tvcastlive-hamivideo.cdn.hinet.net
 weblive-hamivideo.cdn.hinet.net
 catchplay.com
 tra-ww000-cp.akamaized.net
+4gtv.tv
+ftv.com.tw
+ftvnews.com.tw
 
