@@ -246,17 +246,17 @@ compile_dnsmasq(){
         error_detect_depends "apt -y install libnetfilter-conntrack-dev"
         error_detect_depends "apt -y install libdbus-1-dev"
     fi
-    if [ -e /tmp/dnsmasq-2.91 ]; then
-        rm -rf /tmp/dnsmasq-2.91
+    if [ -e /tmp/dnsmasq-2.92 ]; then
+        rm -rf /tmp/dnsmasq-2.92
     fi
     cd /tmp/
-    download dnsmasq-2.91.tar.gz https://thekelleys.org.uk/dnsmasq/dnsmasq-2.91.tar.gz
-    tar -zxf dnsmasq-2.91.tar.gz
-    cd dnsmasq-2.91
+    download dnsmasq-2.92.tar.gz https://thekelleys.org.uk/dnsmasq/dnsmasq-2.92.tar.gz
+    tar -zxf dnsmasq-2.92.tar.gz
+    cd dnsmasq-2.92
     make all-i18n V=s COPTS='-DHAVE_DNSSEC -DHAVE_IDN -DHAVE_CONNTRACK -DHAVE_DBUS'
     if [ $? -ne 0 ]; then
         echo -e "[${red}Error${plain}] dnsmasq upgrade failed."
-        rm -rf /tmp/dnsmasq-2.91 /tmp/dnsmasq-2.91.tar.gz
+        rm -rf /tmp/dnsmasq-2.92 /tmp/dnsmasq-2.92.tar.gz
         exit 1
     fi
 }
@@ -268,14 +268,14 @@ install_dnsmasq(){
         error_detect_depends "yum -y install dnsmasq"
         if centosversion 6; then
             compile_dnsmasq
-            yes|cp -f /tmp/dnsmasq-2.91/src/dnsmasq /usr/sbin/dnsmasq && chmod +x /usr/sbin/dnsmasq
+            yes|cp -f /tmp/dnsmasq-2.92/src/dnsmasq /usr/sbin/dnsmasq && chmod +x /usr/sbin/dnsmasq
         fi
     elif check_sys packageManager apt; then
         error_detect_depends "apt -y install dnsmasq"
     fi
     if [[ ${fastmode} = "0" ]]; then
         compile_dnsmasq
-        yes|cp -f /tmp/dnsmasq-2.91/src/dnsmasq /usr/sbin/dnsmasq && chmod +x /usr/sbin/dnsmasq
+        yes|cp -f /tmp/dnsmasq-2.92/src/dnsmasq /usr/sbin/dnsmasq && chmod +x /usr/sbin/dnsmasq
     fi
     [ ! -f /usr/sbin/dnsmasq ] && echo -e "[${red}Error${plain}] 安装dnsmasq出现问题，请检查." && exit 1
     download /etc/dnsmasq.d/custom_netflix.conf https://raw.githubusercontent.com/olperson/dnsmasq_sniproxy_install/master/dnsmasq.conf
@@ -304,7 +304,7 @@ install_dnsmasq(){
         systemctl restart dnsmasq
     fi
     cd /tmp
-    rm -rf /tmp/dnsmasq-2.91 /tmp/dnsmasq-2.91.tar.gz /tmp/proxy-domains.txt
+    rm -rf /tmp/dnsmasq-2.92 /tmp/dnsmasq-2.92.tar.gz /tmp/proxy-domains.txt
     echo -e "[${green}Info${plain}] dnsmasq install complete..."
 }
 
@@ -453,7 +453,7 @@ help(){
     echo "  -i , --install             安装 Dnsmasq + SNI Proxy"
     echo "  -f , --fastinstall         快速安装 Dnsmasq + SNI Proxy"
     echo "  -id, --installdnsmasq      仅安装 Dnsmasq"
-    echo "  -id, --installdnsmasq      快速安装 Dnsmasq"
+    echo "  -fd, --fastinstalldnsmasq  快速安装 Dnsmasq"
     echo "  -is, --installsniproxy     仅安装 SNI Proxy"
     echo "  -fs, --fastinstallsniproxy 快速安装 SNI Proxy"
     echo "  -u , --uninstall           卸载 Dnsmasq + SNI Proxy"
