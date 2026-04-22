@@ -29,6 +29,10 @@
 ``` Bash
 wget --no-check-certificate -O dnsmasq_sniproxy.sh https://raw.githubusercontent.com/olperson/dnsmasq_sniproxy_install/master/dnsmasq_sniproxy.sh && bash dnsmasq_sniproxy.sh -f
 ```
+### 快速安装（debian13）：
+``` Bash
+wget --no-check-certificate -O dnsmasq_sniproxy.sh https://raw.githubusercontent.com/olperson/dnsmasq_sniproxy_install/master/debian13_install.sh && bash dnsmasq_sniproxy.sh -f
+```
 
 ### 普通安装：
 ``` Bash
