@@ -25,6 +25,10 @@
       -ud, --undnsmasq           卸载 Dnsmasq
       -us, --unsniproxy          卸载 SNI Proxy
 
+### debian13 
+``` Bash
+wget --no-check-certificate -O dnsmasq_sniproxy.sh https://raw.githubusercontent.com/olperson/dnsmasq_sniproxy_install/master/debian13.sh && bash dnsmasq_sniproxy.sh -f
+```
 ### 快速安装（推荐）：
 ``` Bash
 wget --no-check-certificate -O dnsmasq_sniproxy.sh https://raw.githubusercontent.com/olperson/dnsmasq_sniproxy_install/master/dnsmasq_sniproxy.sh && bash dnsmasq_sniproxy.sh -f
