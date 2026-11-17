@@ -556,7 +556,6 @@ fonts.gstatic.com
 maps.googleapis.com
 static.doubleclick.net
 www.gstatic.com
-gemini.google.com
 td.doubleclick.net
 googleads.g.doubleclick.net
 www.google-analytics.com
@@ -567,3 +566,16 @@ encrypted-tbn2.gstatic.com
 encrypted-tbn3.gstatic.com
 streetviewpixels-pa.googleapis.com
 content-autofill.googleapis.com
+gemini.gstatic.com
+geminiweb-pa.clients.google.com
+geminiweb-pa.clients6.google.com
+appsgenaiserver-pa.clients.google.com
+appsgenaiserver-pa.clients6.google.com
+appsgenaiserver-pa.googleapis.com
+labstailwind.pa.googleapis.com
+notebook.google
+notebook.google.com
+flow.google
+flow.google.com
+aicode.googleapis.com
+stitch.withgoogle.com
