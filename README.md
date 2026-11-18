@@ -48,6 +48,8 @@ wget --no-check-certificate -O dnsmasq_sniproxy.sh https://raw.githubusercontent
 ### 使用方法：
 将代理主机的 DNS 地址设置为安装了 dnsmasq 的主机 IP 即可，如果遇到问题，尝试在配置文件中只保留一个 DNS 地址。
 
+对外 DNS 默认过滤所有域名的 AAAA 记录。清单内域名的 A 查询返回配置的代理 IPv4。部署机本身使用原有系统 DNS，可以继续解析 IPv6。SNIproxy 默认通过 IPv4 连接目标网站。
+
 为了防止滥用，建议不要公开 IP 地址，并使用防火墙进行适当的访问限制。
 
 ### 调试排错：
@@ -70,23 +72,6 @@ wget --no-check-certificate -O dnsmasq_sniproxy.sh https://raw.githubusercontent
   在配置完 DNS 后，进行域名解析测试：`nslookup netflix.com` 检查 IP 是否为 Netflix 代理服务器的 IP。
   如果系统中没有 nslookup 命令，可以在 CentOS 上安装：`yum install -y bind-utils` 在 Ubuntu 和 Debian 上安装：`apt-get -y install dnsutils`
 
-- 解决 systemd-resolve 服务占用 53 端口的问题
-  
-  使用 `netstat -tlunp | grep 53` 发现 53 端口被 systemd-resolved 占用
-  修改`/etc/systemd/resolved.conf`文件：
-  ```
-  [Resolve]
-  DNS=8.8.8.8 1.1.1.1 #取消注释，增加dns
-  #FallbackDNS=
-  #Domains=
-  #LLMNR=no
-  #MulticastDNS=no
-  #DNSSEC=no
-  #Cache=yes
-  DNSStubListener=no  #取消注释，把yes改为no
-  ```
-  然后执行以下命令，并重启 systemd-resolved 服务：
-  ```
-  ln -sf /run/systemd/resolve/resolv.conf /etc/resolv.conf
-  systemctl restart systemd-resolved.service
-  ```
+- 检查 DNS 监听地址
+
+  使用 `ss -lntu 'sport = :53'` 查看监听地址。systemd-resolved 可以继续在 `127.0.0.53:53` 提供本机解析。安装脚本让 dnsmasq 绑定非回环接口。如果其他服务已占用对外地址的 53 端口，需要先解决该监听冲突。

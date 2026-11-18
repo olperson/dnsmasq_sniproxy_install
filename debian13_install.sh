@@ -85,10 +85,12 @@ centosversion(){
 }
 
 get_ip(){
-    local IP=$( ip addr | egrep -o '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}' | egrep -v "^192\.168|^172\.1[6-9]\.|^172\.2[0-9]\.|^172\.3[0-2]\.|^10\.|^127\.|^255\.|^0\." | head -n 1 )
-    [ -z ${IP} ] && IP=$( wget -qO- -t1 -T2 ipv4.icanhazip.com )
-    [ -z ${IP} ] && IP=$( wget -qO- -t1 -T2 ipinfo.io/ip )
-    echo ${IP}
+    local IP
+    IP=$(ip -o -4 addr show scope global | awk '{print $4}' | cut -d/ -f1 |
+        grep -Ev '^(192\.168|172\.(1[6-9]|2[0-9]|3[01])|10|127|0|255)\.' | head -n 1)
+    [ -n "$IP" ] || IP=$(wget -4 -qO- -t1 -T2 ipv4.icanhazip.com)
+    [ -n "$IP" ] || IP=$(wget -4 -qO- -t1 -T2 ipinfo.io/ip)
+    printf '%s\n' "$IP"
 }
 
 check_ip(){
@@ -262,37 +264,40 @@ compile_dnsmasq(){
 }
 
 install_dnsmasq(){
-    netstat -a -n -p | grep LISTEN | grep -P "\d+\.\d+\.\d+\.\d+:53\s+" > /dev/null && echo -e "[${red}Error${plain}] required port 53 already in use\n" && exit 1
+    check_ip "$publicip" || exit 1
+    # A loopback-only resolver can share port 53 with the external DNS service.
+    if netstat -lnut | awk '$4 ~ /:53$/ && $4 !~ /^(127\.|::1:53$)/ {busy=1} END {exit !busy}'; then
+        echo "非回环地址的 53 端口已被占用。"
+        exit 1
+    fi
     echo "安装Dnsmasq..."
     if check_sys packageManager yum; then
         error_detect_depends "yum -y install dnsmasq"
-        if centosversion 6; then
-            compile_dnsmasq
-            yes|cp -f /tmp/dnsmasq-2.92/src/dnsmasq /usr/sbin/dnsmasq && chmod +x /usr/sbin/dnsmasq
-        fi
     elif check_sys packageManager apt; then
         error_detect_depends "apt -y install dnsmasq"
     fi
-    if [[ ${fastmode} = "0" ]]; then
+    if [[ ${fastmode} = "0" ]] || centosversion 6 || ! /usr/sbin/dnsmasq --test --conf-file=/dev/null --filter-AAAA 2>/dev/null; then
         compile_dnsmasq
-        yes|cp -f /tmp/dnsmasq-2.92/src/dnsmasq /usr/sbin/dnsmasq && chmod +x /usr/sbin/dnsmasq
+        install -m 755 /tmp/dnsmasq-2.92/src/dnsmasq /usr/sbin/dnsmasq || exit 1
     fi
     [ ! -f /usr/sbin/dnsmasq ] && echo -e "[${red}Error${plain}] 安装dnsmasq出现问题，请检查." && exit 1
-    download /etc/dnsmasq.d/custom_netflix.conf https://raw.githubusercontent.com/olperson/dnsmasq_sniproxy_install/master/dnsmasq.conf
+    local config
+    config=$(mktemp /etc/dnsmasq.d/.custom_netflix.XXXXXX) || exit 1
+    download "$config" https://raw.githubusercontent.com/olperson/dnsmasq_sniproxy_install/master/dnsmasq.conf
     download /tmp/proxy-domains.txt https://raw.githubusercontent.com/olperson/dnsmasq_sniproxy_install/master/proxy-domains.txt
-    for domain in $(cat /tmp/proxy-domains.txt); do
-        printf "address=/${domain}/${publicip}\n"\
-        | tee -a /etc/dnsmasq.d/custom_netflix.conf > /dev/null 2>&1
-    done
+    printf '\nfilter-AAAA\nexcept-interface=lo\nbind-dynamic\n' >> "$config" || exit 1
+    awk -v ip="$publicip" '{ sub(/\r$/, "") } NF { print "address=/" $1 "/" ip }' /tmp/proxy-domains.txt >> "$config" || exit 1
+    /usr/sbin/dnsmasq --test --conf-file="$config" || exit 1
+    chmod 644 "$config" && mv -f "$config" /etc/dnsmasq.d/custom_netflix.conf || exit 1
     [ "$(grep -x -E "(conf-dir=/etc/dnsmasq.d|conf-dir=/etc/dnsmasq.d,.bak|conf-dir=/etc/dnsmasq.d/,\*.conf|conf-dir=/etc/dnsmasq.d,.rpmnew,.rpmsave,.rpmorig)" /etc/dnsmasq.conf)" ] || echo -e "\nconf-dir=/etc/dnsmasq.d" >> /etc/dnsmasq.conf
     echo "启动 Dnsmasq 服务..."
     if check_sys packageManager yum; then
         if centosversion 6; then
             chkconfig dnsmasq on
-            service dnsmasq start
+            service dnsmasq restart || exit 1
         else
             systemctl enable dnsmasq
-            systemctl start dnsmasq
+            systemctl restart dnsmasq || exit 1
         fi
     elif check_sys packageManager apt; then
         if grep -q "^#IGNORE_RESOLVCONF=yes" /etc/default/dnsmasq; then
@@ -300,8 +305,15 @@ install_dnsmasq(){
         elif ! grep -q "^IGNORE_RESOLVCONF=yes" /etc/default/dnsmasq; then
             echo "IGNORE_RESOLVCONF=yes" >> /etc/default/dnsmasq
         fi
+        # Debian's resolvconf hook checks this variable before registering 127.0.0.1.
+        if ! ( . /etc/default/dnsmasq; [[ " $DNSMASQ_EXCEPT " == *" lo "* ]] ); then
+            printf '\nDNSMASQ_EXCEPT="${DNSMASQ_EXCEPT:+$DNSMASQ_EXCEPT }lo"\n' >> /etc/default/dnsmasq || exit 1
+        fi
         systemctl enable dnsmasq
-        systemctl restart dnsmasq
+        systemctl restart dnsmasq || exit 1
+        if [[ -f /run/resolvconf/interface/lo.dnsmasq || -f /run/resolvconf/interfaces/lo.dnsmasq ]]; then
+            resolvconf -d lo.dnsmasq || exit 1
+        fi
     fi
     cd /tmp
     rm -rf /tmp/dnsmasq-2.92 /tmp/dnsmasq-2.92.tar.gz /tmp/proxy-domains.txt
